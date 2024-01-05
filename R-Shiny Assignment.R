@@ -5,12 +5,14 @@ library(ggplot2)
 library(scales)
 
 ui <- fluidPage(
+  
   titlePanel("Claims Analysis"),
   sidebarLayout(
     sidebarPanel(
-      fileInput("file", "Upload Claims Data Here"),
+      fileInput("file", "Upload Claims Data"),
       numericInput("tail", "Select Tail Factor", value = 1.1, min = 0.1, step = 0.1)
     ),
+    
     mainPanel(
       h3("User Input - Claims Data"),
       br(),
@@ -30,6 +32,7 @@ ui <- fluidPage(
 # ------------------------------------------------------------
 
 server <- function(input, output, session) {
+  
   Claims_Data <- reactive({
     req(input$file)
     File <- input$file
@@ -40,6 +43,7 @@ server <- function(input, output, session) {
 # ------------------------------------------------------------
   
   Claims_Triangle <- reactive({
+    
     data <- Claims_Data()
     Loss_Year_Number <- n_distinct(data$`Loss Year`)
     Dev_Year_Number <- n_distinct(data$`Development Year`)
@@ -53,6 +57,7 @@ server <- function(input, output, session) {
     colnames(Triangle) <- Dev_Years
     
     for (row in 1:nrow(data)) {
+      
       LYear <- as.character(data[row, 1])
       DYear <- as.character(data[row, 2])
       Triangle[LYear, DYear] <- as.double(data[row, 3])
@@ -88,6 +93,7 @@ server <- function(input, output, session) {
 # ------------------------------------------------------------  
   
   Claims_Plot <- reactive({
+    
     Full_Triangle <- Claims_Triangle()
     data <- Claims_Data()
     
@@ -105,16 +111,18 @@ server <- function(input, output, session) {
     
     ggplot(data_plot, aes(x = Development, y = Amount, group = Loss, color = Loss)) +
       geom_point(size = 2) +
-      geom_line(linetype = "dashed", size = 0.5) +  # Corrected parameter name to size
-      geom_text(aes(label = scales::comma(Amount)), hjust = 0.5, vjust = -1, color = "darkblue", size = 3.5) +
+      geom_line(linetype = "dashed", size = 0.5) +
+      geom_text(aes(label = scales::comma(Amount)), hjust = 0.53, vjust = -1, color = "darkblue", size = 3.5) +
       xlab("Development Year") +
       ylab("Claims Amount ($)") +
       labs(title = "Cumulative Paid Claims Graph") +
+      scale_y_continuous(labels = scales::comma) +
+      theme_minimal() +
       theme(plot.title = element_text(hjust = 0.5, size = 20, face = "bold"),
-            axis.title = element_text(size = 14),
-            axis.text = element_text(size = 12),
-            legend.title = element_text(size = 14),
-            legend.text = element_text(size = 12))
+            axis.title = element_text(size = 15),
+            axis.text = element_text(size = 11),
+            legend.title = element_text(size = 15),
+            legend.text = element_text(size = 11))
     
   })
 
@@ -122,11 +130,11 @@ server <- function(input, output, session) {
   
   output$contents <- renderTable({
     Claims_Data()
-  }, digits = 0, align = "ccc")
+  }, digits = 0, align = "c")
   
   output$triangle <- renderTable({
     Claims_Triangle()
-  }, rownames = TRUE, digits = 0, width = 600)
+  }, rownames = TRUE, digits = 0, width = 500, align = "c")
   
   output$plot <- renderPlot({
     Claims_Plot()
